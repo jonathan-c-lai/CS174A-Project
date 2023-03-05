@@ -18,6 +18,10 @@ const MIN_ASTEROID_FRAMES_TO_ORIGIN = 300
 
 const ASTEROID_SPAWN_PERIOD = 0.5
 
+const MAX_SPACESHIP_ROTATION = 1
+const SPACESHIP_ROTATION_SPEED = 20 // smaller number, higher speed
+const SPACESHIP_DISTANCE_FROM_ORIGIN = 5
+
 // adding new this.asteroid_xxxxxxxx:
     // add variable in constructor
     // assign it value when spawn asteroid in spawn_asteroid
@@ -34,7 +38,9 @@ export class Asteroids_Demo extends Scene {
             asteroid2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
             asteroid3: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
             background_sphere: new defs.Subdivision_Sphere(4),
-            background_cube: new defs.Cube()
+            background_cube: new defs.Cube(),
+
+            spaceship: new defs.Cube() // TODO: Make it a pretty spaceship, right now temp shape
         };
 
         // *** Materials
@@ -50,6 +56,10 @@ export class Asteroids_Demo extends Scene {
                 ambient: 1, specular: 0, diffusivity: 0,
                 texture: new Texture("assets/galaxy_2048.jpg", "LINEAR_MIPMAP_LINEAR")
             }),
+
+            // TODO: modify for make spaceship pretty
+            spaceship: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 8, 15), vec3(0, 0, -3), vec3(0, 1, 0));
@@ -73,6 +83,11 @@ export class Asteroids_Demo extends Scene {
         // background model transform
             //this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -60)).times(Mat4.scale(100, 100, 0.01));
         this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.scale(50, 50, 50));
+
+
+        this.spaceshipRotationAmount = 0
+        this.turnLeft = false;
+        this.turnRight = false;
     }   
 
     make_control_panel() {
@@ -80,6 +95,8 @@ export class Asteroids_Demo extends Scene {
         this.key_triggered_button("Spawn Asteroid", ["c"], () => {
             this.spawn_asteroid();
         });
+        this.key_triggered_button("Rotate Left", ["q"], ()=> this.turnLeft = true, undefined, ()=>this.turnLeft = false)
+        this.key_triggered_button("Rotate Right", ["e"], ()=> this.turnRight = true, undefined, ()=>this.turnRight = false)
     }
 
     display(context, program_state) {
@@ -106,6 +123,8 @@ export class Asteroids_Demo extends Scene {
         this.update_asteroids();
         this.cull_asteroids();
         this.draw_asteroids(context, program_state, t);
+
+        this.draw_spaceship(context, program_state);
 
         // spawn asteroid every so often
         if (t - this.last_asteroid_spawned_t > ASTEROID_SPAWN_PERIOD) {
@@ -190,6 +209,34 @@ export class Asteroids_Demo extends Scene {
                 i -= 1;
             }
         }
+    }
+
+    draw_spaceship(context, program_state) {
+
+        const yellow = hex_color("#fac91a");
+
+        if (this.turnLeft) {
+            if (this.spaceshipRotationAmount < MAX_SPACESHIP_ROTATION)
+                this.spaceshipRotationAmount += MAX_SPACESHIP_ROTATION/SPACESHIP_ROTATION_SPEED
+
+        }
+        if (this.turnRight) {
+            if (this.spaceshipRotationAmount > -1 * MAX_SPACESHIP_ROTATION)
+                this.spaceshipRotationAmount -= MAX_SPACESHIP_ROTATION/SPACESHIP_ROTATION_SPEED
+        }
+        let model_transform = Mat4.identity()
+        let translation = Mat4.translation(0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN)
+        let rotation = Mat4.rotation(Math.PI+this.spaceshipRotationAmount, 0, 1, 0)
+        let rotationInverse = Mat4.inverse(rotation)
+        let translationInverse = Mat4.inverse(translation)
+
+        // model_transform = model_transform.times(rotation) // .times(rotation)
+
+
+        // model_transform = model_transform.times(rotation)
+        model_transform = model_transform.times(translation).times(rotation).times(translationInverse)
+        this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
+
     }
 }
 
