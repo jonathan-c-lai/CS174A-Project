@@ -18,8 +18,8 @@ const MIN_ASTEROID_FRAMES_TO_ORIGIN = 300
 
 const ASTEROID_SPAWN_PERIOD = 0.5
 
-const MAX_SPACESHIP_ROTATION = 1
-const SPACESHIP_ROTATION_SPEED = 20 // smaller number, higher speed
+const MAX_SPACESHIP_ROTATION = 0.5
+const SPACESHIP_ROTATION_SPEED = 50 // smaller number, higher speed
 const SPACESHIP_DISTANCE_FROM_ORIGIN = 5
 
 // adding new this.asteroid_xxxxxxxx:
@@ -84,6 +84,7 @@ export class Asteroids_Demo extends Scene {
             //this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -60)).times(Mat4.scale(100, 100, 0.01));
         this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.scale(50, 50, 50));
 
+        this.spaceship_pos = [0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN]
 
         this.spaceshipRotationAmount = 0
         this.turnLeft = false;
@@ -214,28 +215,40 @@ export class Asteroids_Demo extends Scene {
     draw_spaceship(context, program_state) {
 
         const yellow = hex_color("#fac91a");
+        const blue = hex_color("#851056")
+        const green = hex_color("#1da232")
 
+        // turning left and right
         if (this.turnLeft) {
             if (this.spaceshipRotationAmount < MAX_SPACESHIP_ROTATION)
                 this.spaceshipRotationAmount += MAX_SPACESHIP_ROTATION/SPACESHIP_ROTATION_SPEED
-
         }
         if (this.turnRight) {
             if (this.spaceshipRotationAmount > -1 * MAX_SPACESHIP_ROTATION)
                 this.spaceshipRotationAmount -= MAX_SPACESHIP_ROTATION/SPACESHIP_ROTATION_SPEED
         }
-        let model_transform = Mat4.identity()
-        let translation = Mat4.translation(0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN)
-        let rotation = Mat4.rotation(Math.PI+this.spaceshipRotationAmount, 0, 1, 0)
-        let rotationInverse = Mat4.inverse(rotation)
-        let translationInverse = Mat4.inverse(translation)
 
-        // model_transform = model_transform.times(rotation) // .times(rotation)
+        // Just in case I need in future
+
+        // let model_transform = Mat4.identity()
+        // let translation = Mat4.translation(0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN / 2)
+        // let rotation = Mat4.rotation(Math.PI+this.spaceshipRotationAmount, 0, 1, 0)
+        // let rotationInverse = Mat4.inverse(rotation)
+        // let translationInverse = Mat4.inverse(translation)
+        //
+        // // model_transform = model_transform.times(rotation) // .times(rotation)
+        //
+        //
+        // // model_transform = model_transform.times(rotation)
+        // model_transform = model_transform.times(translation).times(rotation).times(translationInverse)
+        //
+        // // this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
+
+        // console.log("Spaceship pos: " + this.spaceship_pos)
 
 
-        // model_transform = model_transform.times(rotation)
-        model_transform = model_transform.times(translation).times(rotation).times(translationInverse)
-        this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
+        this.spaceship_pos = [10 * Math.cos(Math.PI / 2 + this.spaceshipRotationAmount), 0, -10*Math.sin(Math.PI / 2 + this.spaceshipRotationAmount)]
+        this.shapes.spaceship.draw(context, program_state, Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)), this.materials.spaceship.override({color: yellow}));
 
     }
 }
