@@ -1,4 +1,5 @@
 import {defs, tiny} from './examples/common.js';
+import { Shape_From_File } from './examples/obj-file-demo.js';
 
 const {
     Vector, Vector3, vec, vec3, vec4, color, hex_color, Shader, Matrix, Mat4, Light, Shape, Material, Scene, Texture
@@ -20,7 +21,7 @@ const ASTEROID_SPAWN_PERIOD = 0.5
 
 const MAX_SPACESHIP_ROTATION = 0.5
 const SPACESHIP_ROTATION_SPEED = 50 // smaller number, higher speed
-const SPACESHIP_DISTANCE_FROM_ORIGIN = 5
+const SPACESHIP_DISTANCE_FROM_ORIGIN = 3
 
 // adding new this.asteroid_xxxxxxxx:
     // add variable in constructor
@@ -34,7 +35,7 @@ export class Asteroids_Demo extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            asteroid1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            asteroid1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(3),
             asteroid2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
             asteroid3: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
             background_sphere: new defs.Subdivision_Sphere(4),
@@ -45,8 +46,18 @@ export class Asteroids_Demo extends Scene {
 
         // *** Materials
         this.materials = {
+            //its so hard to get asteroid obj file 
+            // asteroid1: new Material(new defs.Fake_Bump_Map(3), {
+            //     color: color(.5, .5, .5, 1),
+            //     ambient: .3, diffusivity: .5, specularity: 0, texture: new Texture("assets/asteroid1_256.jpg")
+            // }),
+            // asteroid1: new Material(new Textured_Phong(), {
+            //     color: hex_color("#000000"),
+            //     ambient: 1, specular: 1,
+            //     texture: new Texture("assets/asteroid1_256.jpg")
+            // }),
             asteroid1: new Material(new defs.Phong_Shader(), 
-                {ambient: 0, diffusivity: 1, specular: 1, color: color(0.5, 0.5, 0.5, 1)}),
+               {ambient: 0, diffusivity: 1, specular: 1, color: color(0.5, 0.5, 0.5, 1)}),
             asteroid2: new Material(new defs.Phong_Shader(), 
                 {ambient: 0, diffusivity: 1, specular: 1, color: color(0.7, 0.9, 0.9, 1)}),
             asteroid3: new Material(new defs.Phong_Shader(), 
@@ -84,11 +95,14 @@ export class Asteroids_Demo extends Scene {
             //this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -60)).times(Mat4.scale(100, 100, 0.01));
         this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.scale(50, 50, 50));
 
+        // spaceship properties
         this.spaceship_pos = [0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN]
-
         this.spaceshipRotationAmount = 0
         this.turnLeft = false;
         this.turnRight = false;
+
+        // pause animation flag
+        this.pause_asteroids = 0;
     }   
 
     make_control_panel() {
@@ -98,6 +112,7 @@ export class Asteroids_Demo extends Scene {
         });
         this.key_triggered_button("Rotate Left", ["q"], ()=> this.turnLeft = true, undefined, ()=>this.turnLeft = false)
         this.key_triggered_button("Rotate Right", ["e"], ()=> this.turnRight = true, undefined, ()=>this.turnRight = false)
+        this.key_triggered_button("Pause Asteroids", ["p"], () => { this.pause_asteroids ^= 1; });
     }
 
     display(context, program_state) {
@@ -121,16 +136,21 @@ export class Asteroids_Demo extends Scene {
         this.draw_background(context, program_state);
 
         // update asteroid positions, cull if at origin, draw resulting asteroids
-        this.update_asteroids();
+        if (!this.pause_asteroids) {
+            this.update_asteroids();
+        }
         this.cull_asteroids();
         this.draw_asteroids(context, program_state, t);
-
         this.draw_spaceship(context, program_state);
 
+        this.check_collisions();
+
         // spawn asteroid every so often
-        if (t - this.last_asteroid_spawned_t > ASTEROID_SPAWN_PERIOD) {
-            this.spawn_asteroid();  
-            this.last_asteroid_spawned_t = t;
+        if (!this.pause_asteroids) {
+            if (t - this.last_asteroid_spawned_t > ASTEROID_SPAWN_PERIOD) {
+                this.spawn_asteroid();  
+                this.last_asteroid_spawned_t = t;
+            }
         }
     }
 
@@ -160,7 +180,7 @@ export class Asteroids_Demo extends Scene {
         this.asteroid_frames_till_origin.push(frames_until_asteroid_to_origin);
         this.asteroid_rotation_dir.push([Math.random(), Math.random(), Math.random()])
 
-        console.log("new asteroid spawned w/ pos: ", x,y,z);
+        //console.log("new asteroid spawned w/ pos: ", x,y,z);
     }
 
     // update position of asteroids
@@ -200,16 +220,21 @@ export class Asteroids_Demo extends Scene {
     cull_asteroids() {
         for (let i = 0; i < this.num_asteroids; i += 1) {
             if (this.asteroid_pos[i][2] > 0) {
-                console.log("asteroid removed");
-                this.num_asteroids -= 1;
-                this.asteroid_type.splice(i,1);
-                this.asteroid_init_pos.splice(i,1);
-                this.asteroid_pos.splice(i,1);
-                this.asteroid_frames_till_origin.splice(i,1);
-                this.asteroid_rotation_dir.splice(i,1);
+                this.delete_asteroid(i);
                 i -= 1;
             }
         }
+    }
+
+    // delete asteroid given index
+    delete_asteroid(i) {
+        console.log("asteroid removed");
+        this.num_asteroids -= 1;
+        this.asteroid_type.splice(i,1);
+        this.asteroid_init_pos.splice(i,1);
+        this.asteroid_pos.splice(i,1);
+        this.asteroid_frames_till_origin.splice(i,1);
+        this.asteroid_rotation_dir.splice(i,1);
     }
 
     draw_spaceship(context, program_state) {
@@ -244,12 +269,42 @@ export class Asteroids_Demo extends Scene {
         //
         // // this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
 
-        // console.log("Spaceship pos: " + this.spaceship_pos)
+     console.log("Spaceship pos: " + this.spaceship_pos)
 
 
         this.spaceship_pos = [10 * Math.cos(Math.PI / 2 + this.spaceshipRotationAmount), 0, -10*Math.sin(Math.PI / 2 + this.spaceshipRotationAmount)]
         this.shapes.spaceship.draw(context, program_state, Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)), this.materials.spaceship.override({color: yellow}));
+    }
 
+    // check collisions returns the index of asteroid that collided with spaceship
+        // loops through all asteroids and if the difference of position in x y AND z < 2 for any given asteroid, we return that collision happened
+    check_collisions() {
+        for (let i = 0; i < this.num_asteroids; i += 1) {
+            // if their z axis value less than 2*radius different then we continue checking
+            if (Math.abs(this.asteroid_pos[i][2] - this.spaceship_pos[2]) < 2) {
+                if (Math.abs(this.asteroid_pos[i][1] - this.spaceship_pos[1]) < 2) {
+                    if (Math.abs(this.asteroid_pos[i][0] - this.spaceship_pos[0]) < 2) {
+                        console.log("Collision!")
+                        // deem the explosion the average of the locations
+                        this.explosion(
+                            (this.asteroid_pos[i][2] - this.spaceship_pos[2])/2.0, 
+                            (this.asteroid_pos[i][1] - this.spaceship_pos[1])/2.0, 
+                            (this.asteroid_pos[i][0] - this.spaceship_pos[0])/2.0,
+                            i
+                        )
+                        this.delete_asteroid(i)
+                        return i
+                    }
+                }
+            }
+        }
+        return -1
+    }
+
+    // animates an explosion at the coordinates x, y, z
+    // for asteroid i
+    explosion(x, y, z, i) {
+        
     }
 }
 
