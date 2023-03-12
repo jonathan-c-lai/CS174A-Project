@@ -21,7 +21,7 @@ const ASTEROID_SPAWN_PERIOD = 0.5
 
 const MAX_SPACESHIP_ROTATION = 0.5
 const SPACESHIP_ROTATION_SPEED = 50 // smaller number, higher speed
-const SPACESHIP_DISTANCE_FROM_ORIGIN = 3
+const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 
 // adding new this.asteroid_xxxxxxxx:
     // add variable in constructor
@@ -41,8 +41,10 @@ export class Asteroids_Demo extends Scene {
             background_sphere: new defs.Subdivision_Sphere(4),
             background_cube: new defs.Cube(),
 
-            spaceship: new defs.Cube(), // TODO: Make it a pretty spaceship, right now temp shape
-            projectile: new defs.Cube()
+             // TODO: Make it a pretty spaceship, right now temp shape
+            projectile: new defs.Cube(),
+
+            spaceship: new Shape_From_File("assets/Fighter_01.obj")
         };
 
         // *** Materials
@@ -99,8 +101,8 @@ export class Asteroids_Demo extends Scene {
         this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.scale(50, 50, 50));
 
         // spaceship properties
-        this.spaceship_pos = [0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN] // this needs to be fixed
-        this.spaceshipRotationAmount = 0
+        this.spaceship_pos = [0,0,-1.0 * SPACESHIP_DISTANCE_FROM_ORIGIN] // this needs to be fixed
+        this.spaceshipRotationAmount = 0.0
         this.turnLeft = false;
         this.turnRight = false;
 
@@ -158,6 +160,7 @@ export class Asteroids_Demo extends Scene {
         // this.spawn_projectile()
         this.draw_projectile(context, program_state, t, dt);
         this.update_projectiles()
+        this.cull_projectiles()
 
         this.check_collisions();
 
@@ -286,11 +289,12 @@ export class Asteroids_Demo extends Scene {
         //
         // // this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
 
-        console.log("Spaceship pos: " + this.spaceship_pos)
+        // console.log("Spaceship pos: " + this.spaceship_pos)
 
+        let spaceship_tranform = Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)).times(Mat4.rotation(Math.PI, 0, 1, 0)).times(Mat4.scale(1.8, 1.8, 1.8));
 
-        this.spaceship_pos = [10 * Math.cos(Math.PI / 2 + this.spaceshipRotationAmount), 0, -10*Math.sin(Math.PI / 2 + this.spaceshipRotationAmount)]
-        this.shapes.spaceship.draw(context, program_state, Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)), this.materials.spaceship.override({color: yellow}));
+        this.spaceship_pos = [10.0 * Math.cos(Math.PI / 2.0 + this.spaceshipRotationAmount), 0, -10.0*Math.sin(Math.PI / 2.0 + this.spaceshipRotationAmount)]
+        this.shapes.spaceship.draw(context, program_state, spaceship_tranform, this.materials.spaceship);
     }
 
     // check collisions returns the index of asteroid that collided with spaceship
@@ -337,7 +341,7 @@ export class Asteroids_Demo extends Scene {
         for (let i = 0; i < this.num_projectiles; i += 1) {
             // calculate new position
             let new_x = this.projectile_pos[i][0] + (this.projectile_init_pos[i][0] / 50)
-            let new_y = this.projectile_pos[i][1] + (this.projectile_init_pos[i][1] / 50)
+            let new_y = this.projectile_pos[i][1]
             let new_z = this.projectile_pos[i][2] + (this.projectile_init_pos[i][2] / 50)
 
             this.projectile_pos[i] = [new_x, new_y, new_z]
@@ -347,12 +351,28 @@ export class Asteroids_Demo extends Scene {
     draw_projectile(context, program_state, t, dt) {
 
             for (let i = 0; i < this.num_projectiles; i += 1) {
-                let projectile_transform = Mat4.identity().times(Mat4.scale(0.25, 0.25, 0.25)).times(Mat4.translation(this.projectile_pos[i][0],this.projectile_pos[i][1],this.projectile_pos[i][2])).times(Mat4.rotation(this.projectile_rotation_amount[i] ,0,1,0))
+                let projectile_transform = Mat4.identity().times(Mat4.translation(this.projectile_pos[i][0],this.projectile_pos[i][1],this.projectile_pos[i][2])).times(Mat4.rotation(this.projectile_rotation_amount[i] ,0,1,0)).times(Mat4.scale(0.25, 0.25, 0.25))
                 this.shapes.projectile.draw(context, program_state, projectile_transform, this.materials.projectile.override({color: hex_color("#88c9aa")}))
-                console.log(this.projectile_pos[0])
+
             }
     }
 
+    cull_projectiles() {
+        for (let i = 0; i < this.num_projectiles; i += 1) {
+            if (this.projectile_pos[i][2] < ASTEROID_SPAWN_Z_COORD) {
+                this.delete_projectile(i);
+
+            }
+        }
+    }
+
+    delete_projectile(i) {
+        console.log("projectile removed");
+        this.num_projectiles -= 1;
+        this.projectile_init_pos.splice(i,1);
+        this.projectile_pos.splice(i,1);
+        this.projectile_rotation_amount.splice(i,1);
+    }
 
 }
 
