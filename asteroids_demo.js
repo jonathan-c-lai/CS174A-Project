@@ -41,7 +41,8 @@ export class Asteroids_Demo extends Scene {
             background_sphere: new defs.Subdivision_Sphere(4),
             background_cube: new defs.Cube(),
 
-            spaceship: new defs.Cube() // TODO: Make it a pretty spaceship, right now temp shape
+            spaceship: new defs.Cube(), // TODO: Make it a pretty spaceship, right now temp shape
+            projectile: new defs.Cube()
         };
 
         // *** Materials
@@ -71,6 +72,8 @@ export class Asteroids_Demo extends Scene {
             // TODO: modify for make spaceship pretty
             spaceship: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            projectile: new Material(new defs.Phong_Shader(),
+                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 8, 15), vec3(0, 0, -3), vec3(0, 1, 0));
@@ -96,10 +99,17 @@ export class Asteroids_Demo extends Scene {
         this.background_sphere_model_transform = Mat4.identity().times(Mat4.translation(0, 0, -30)).times(Mat4.scale(50, 50, 50));
 
         // spaceship properties
-        this.spaceship_pos = [0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN]
+        this.spaceship_pos = [0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN] // this needs to be fixed
         this.spaceshipRotationAmount = 0
         this.turnLeft = false;
         this.turnRight = false;
+
+        this.num_projectiles = 0;
+
+        this.projectile_init_pos = [];
+        this.projectile_pos = [];
+        this.projectile_rotation_amount = [];
+
 
         // pause animation flag
         this.pause_asteroids = 0;
@@ -112,6 +122,7 @@ export class Asteroids_Demo extends Scene {
         });
         this.key_triggered_button("Rotate Left", ["q"], ()=> this.turnLeft = true, undefined, ()=>this.turnLeft = false)
         this.key_triggered_button("Rotate Right", ["e"], ()=> this.turnRight = true, undefined, ()=>this.turnRight = false)
+        this.key_triggered_button("Shoot Projectile", ["`"], ()=> {this.spawn_projectile();})
         this.key_triggered_button("Pause Asteroids", ["p"], () => { this.pause_asteroids ^= 1; });
     }
 
@@ -138,10 +149,15 @@ export class Asteroids_Demo extends Scene {
         // update asteroid positions, cull if at origin, draw resulting asteroids
         if (!this.pause_asteroids) {
             this.update_asteroids();
+
         }
         this.cull_asteroids();
         this.draw_asteroids(context, program_state, t);
         this.draw_spaceship(context, program_state);
+
+        // this.spawn_projectile()
+        this.draw_projectile(context, program_state, t, dt);
+        this.update_projectiles()
 
         this.check_collisions();
 
@@ -152,6 +168,7 @@ export class Asteroids_Demo extends Scene {
                 this.last_asteroid_spawned_t = t;
             }
         }
+
     }
 
     // draw background
@@ -228,7 +245,7 @@ export class Asteroids_Demo extends Scene {
 
     // delete asteroid given index
     delete_asteroid(i) {
-        console.log("asteroid removed");
+        // console.log("asteroid removed");
         this.num_asteroids -= 1;
         this.asteroid_type.splice(i,1);
         this.asteroid_init_pos.splice(i,1);
@@ -269,7 +286,7 @@ export class Asteroids_Demo extends Scene {
         //
         // // this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
 
-     console.log("Spaceship pos: " + this.spaceship_pos)
+        console.log("Spaceship pos: " + this.spaceship_pos)
 
 
         this.spaceship_pos = [10 * Math.cos(Math.PI / 2 + this.spaceshipRotationAmount), 0, -10*Math.sin(Math.PI / 2 + this.spaceshipRotationAmount)]
@@ -306,6 +323,37 @@ export class Asteroids_Demo extends Scene {
     explosion(x, y, z, i) {
         
     }
+
+    spawn_projectile() {
+        this.num_projectiles += 1;
+        this.projectile_rotation_amount.push(this.spaceshipRotationAmount)
+        this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]]) // TODO: FIX SPACESHIP POS cuz it's wrongk
+        this.projectile_init_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
+        console.log(this.projectile_pos)
+
+    }
+
+    update_projectiles() {
+        for (let i = 0; i < this.num_projectiles; i += 1) {
+            // calculate new position
+            let new_x = this.projectile_pos[i][0] + (this.projectile_init_pos[i][0] / 50)
+            let new_y = this.projectile_pos[i][1] + (this.projectile_init_pos[i][1] / 50)
+            let new_z = this.projectile_pos[i][2] + (this.projectile_init_pos[i][2] / 50)
+
+            this.projectile_pos[i] = [new_x, new_y, new_z]
+        }
+    }
+
+    draw_projectile(context, program_state, t, dt) {
+
+            for (let i = 0; i < this.num_projectiles; i += 1) {
+                let projectile_transform = Mat4.identity().times(Mat4.scale(0.25, 0.25, 0.25)).times(Mat4.translation(this.projectile_pos[i][0],this.projectile_pos[i][1],this.projectile_pos[i][2])).times(Mat4.rotation(this.projectile_rotation_amount[i] ,0,1,0))
+                this.shapes.projectile.draw(context, program_state, projectile_transform, this.materials.projectile.override({color: hex_color("#88c9aa")}))
+                console.log(this.projectile_pos[0])
+            }
+    }
+
+
 }
 
 class Texture_Rotate extends Textured_Phong {
