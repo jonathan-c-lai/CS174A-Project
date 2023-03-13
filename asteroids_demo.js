@@ -37,7 +37,7 @@ export class Asteroids_Demo extends Scene {
         this.shapes = {
             asteroid1: new Shape_From_File("assets/Asteroid1.obj"),
             asteroid2: new Shape_From_File("assets/Asteroid2.obj"),
-            asteroid3: new Shape_From_File("assets/Asteroid3.obj"),
+            asteroid3: new Shape_From_File("assets/Asteroid1.obj"),
             background_sphere: new defs.Subdivision_Sphere(4),
             background_cube: new defs.Cube(),
 
