@@ -44,7 +44,10 @@ export class Asteroids_Demo extends Scene {
              // TODO: Make it a pretty spaceship, right now temp shape
             projectile: new defs.Cube(),
 
-            spaceship: new Shape_From_File("assets/Fighter_01.obj")
+            spaceship: new Shape_From_File("assets/Fighter_01.obj"),
+
+            asteroid_test: new Shape_From_File("assets/Asteroid.obj"),
+            // sphere: new defs.Subdivision_Sphere(9),
         };
 
         // *** Materials
@@ -59,6 +62,8 @@ export class Asteroids_Demo extends Scene {
             //     ambient: 1, specular: 1,
             //     texture: new Texture("assets/asteroid1_256.jpg")
             // }),
+
+
             asteroid1: new Material(new defs.Phong_Shader(), 
                {ambient: 0, diffusivity: 1, specular: 1, color: color(0.5, 0.5, 0.5, 1)}),
             asteroid2: new Material(new defs.Phong_Shader(), 
@@ -171,6 +176,8 @@ export class Asteroids_Demo extends Scene {
                 this.last_asteroid_spawned_t = t;
             }
         }
+
+        this.shapes.asteroid_test.draw(context, program_state, Mat4.identity(), this.materials.spaceship);
 
     }
 
