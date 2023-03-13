@@ -35,9 +35,9 @@ export class Asteroids_Demo extends Scene {
 
         // At the beginning of our program, load one of each of these shape definitions onto the GPU.
         this.shapes = {
-            asteroid1: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(3),
-            asteroid2: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(1),
-            asteroid3: new (defs.Subdivision_Sphere.prototype.make_flat_shaded_version())(2),
+            asteroid1: new Shape_From_File("assets/Asteroid1.obj"),
+            asteroid2: new Shape_From_File("assets/Asteroid2.obj"),
+            asteroid3: new Shape_From_File("assets/Asteroid3.obj"),
             background_sphere: new defs.Subdivision_Sphere(4),
             background_cube: new defs.Cube(),
 
@@ -52,24 +52,18 @@ export class Asteroids_Demo extends Scene {
 
         // *** Materials
         this.materials = {
-            //its so hard to get asteroid obj file 
-            // asteroid1: new Material(new defs.Fake_Bump_Map(3), {
-            //     color: color(.5, .5, .5, 1),
-            //     ambient: .3, diffusivity: .5, specularity: 0, texture: new Texture("assets/asteroid1_256.jpg")
-            // }),
             // asteroid1: new Material(new Textured_Phong(), {
-            //     color: hex_color("#000000"),
-            //     ambient: 1, specular: 1,
-            //     texture: new Texture("assets/asteroid1_256.jpg")
+            //     color: hex_color("#646464"),
+            //     ambient: 0.1, diffusivity: 0.5, specular: 1,
+            //     texture: new Texture("assets/Asteroid1_Texture.jpg")
             // }),
-
-
             asteroid1: new Material(new defs.Phong_Shader(), 
-               {ambient: 0, diffusivity: 1, specular: 1, color: color(0.5, 0.5, 0.5, 1)}),
+              {ambient: 0.3, diffusivity: 1, specular: 0.2, color: hex_color("#646464")}),
             asteroid2: new Material(new defs.Phong_Shader(), 
-                {ambient: 0, diffusivity: 1, specular: 1, color: color(0.7, 0.9, 0.9, 1)}),
+                {ambient: 0.3, diffusivity: 1, specular: 0.2, color: hex_color("#3a3a3a")}),
             asteroid3: new Material(new defs.Phong_Shader(), 
-                {ambient: 0, diffusivity: 1, specular: 1, color: color(0.3, 0.5, 0.3, 1)}),
+                {ambient: 0.3, diffusivity: 1, specular: 0.2, color: hex_color("#afafaf")}),
+            
             background: new Material(new Texture_Rotate(), {
                 color: hex_color("#000000"),
                 ambient: 1, specular: 0, diffusivity: 0,
@@ -83,7 +77,7 @@ export class Asteroids_Demo extends Scene {
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
         }
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 8, 15), vec3(0, 0, -3), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(vec3(0, 15, 15), vec3(0, 0, -20), vec3(0, 1, 0));
 
         // need asteroid_type because there was bug that if asteroid removed, the indices would get shifted down
         // so asteroid_type retains the asteroid type of every asteroid
@@ -176,16 +170,17 @@ export class Asteroids_Demo extends Scene {
                 this.last_asteroid_spawned_t = t;
             }
         }
-
-        this.shapes.asteroid_test.draw(context, program_state, Mat4.identity(), this.materials.spaceship);
-
     }
 
     // draw background
     draw_background(context, program_state) {
+        // zoom out
         this.shapes.background_sphere.arrays.texture_coord.forEach(
             (v, i, l) => l[i] = vec(v[0]*5, v[1]*5)
         )
+        // draw transform of slightly rotating background -- maybe not this is super dizzy
+        // let t = program_state.animation_time / 1000;
+        // this.background_sphere_model_transform = this.background_sphere_model_transform.times(Mat4.rotation(0.00001, 0, 1, 0));
         this.shapes.background_sphere.draw(context, program_state, this.background_sphere_model_transform, this.materials.background);
     }
 
