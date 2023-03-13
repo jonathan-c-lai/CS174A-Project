@@ -78,9 +78,16 @@ export class Asteroids_Demo extends Scene {
 
             // TODO: modify for make spaceship pretty
             spaceship: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+                {ambient: .6, diffusivity: .8, texture: new Texture("assets/spaceship_texture")}),
             projectile: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            bumps: new Material(new defs.Fake_Bump_Map(1),
+                {color: color(.5, .5, .5, 1),
+                    ambient: .3,
+                    diffusivity: .5,
+                    specularity: .5,
+                    texture: new Texture("assets/stars.png")
+            })
         }
 
         this.initial_camera_location = Mat4.look_at(vec3(0, 8, 15), vec3(0, 0, -3), vec3(0, 1, 0));
@@ -120,6 +127,8 @@ export class Asteroids_Demo extends Scene {
 
         // pause animation flag
         this.pause_asteroids = 0;
+
+
     }   
 
     make_control_panel() {
@@ -177,7 +186,7 @@ export class Asteroids_Demo extends Scene {
             }
         }
 
-        this.shapes.asteroid_test.draw(context, program_state, Mat4.identity(), this.materials.spaceship);
+        this.shapes.asteroid_test.draw(context, program_state, Mat4.identity(), this.materials.bumps);
 
     }
 
@@ -298,10 +307,10 @@ export class Asteroids_Demo extends Scene {
 
         // console.log("Spaceship pos: " + this.spaceship_pos)
 
-        let spaceship_tranform = Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)).times(Mat4.rotation(Math.PI, 0, 1, 0)).times(Mat4.scale(1.8, 1.8, 1.8));
+        let spaceship_transform = Mat4.identity().times(Mat4.translation(this.spaceship_pos[0],this.spaceship_pos[1],this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1 ,0)).times(Mat4.rotation(Math.PI, 0, 1, 0)).times(Mat4.scale(1.8, 1.8, 1.8));
 
         this.spaceship_pos = [10.0 * Math.cos(Math.PI / 2.0 + this.spaceshipRotationAmount), 0, -10.0*Math.sin(Math.PI / 2.0 + this.spaceshipRotationAmount)]
-        this.shapes.spaceship.draw(context, program_state, spaceship_tranform, this.materials.spaceship);
+        this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship);
     }
 
     // check collisions returns the index of asteroid that collided with spaceship
