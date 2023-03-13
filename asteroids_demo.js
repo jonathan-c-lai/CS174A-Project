@@ -41,7 +41,6 @@ export class Asteroids_Demo extends Scene {
             background_sphere: new defs.Subdivision_Sphere(4),
             background_cube: new defs.Cube(),
 
-             // TODO: Make it a pretty spaceship, right now temp shape
             projectile: new defs.Cube(),
 
             spaceship: new Shape_From_File("assets/Fighter_01.obj"),
@@ -71,8 +70,8 @@ export class Asteroids_Demo extends Scene {
             }),
 
             // TODO: modify for make spaceship pretty
-            spaceship: new Material(new defs.Phong_Shader(),
-                {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
+            spaceship: new Material(new Texture_Rotate(), {
+                color: hex_color("#000000"), ambient: 1, specular: 0, diffusivity: 0, texture: new Texture("assets/spaceship_texture.jpg")}),
             projectile: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
         }
