@@ -23,6 +23,7 @@ const MAX_SPACESHIP_ROTATION = 0.5
 const SPACESHIP_ROTATION_SPEED = 50 // smaller number, higher speed
 const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 
+const POINTS_PER_ASTEROID_SHOT = 10
 // adding new this.asteroid_xxxxxxxx:
 // add variable in constructor
 // assign it value when spawn asteroid in spawn_asteroid
@@ -180,7 +181,6 @@ export class Asteroids_Demo extends Scene {
         this.draw_asteroids(context, program_state, t);
         this.draw_spaceship(context, program_state);
 
-        // this.spawn_projectile()
         this.draw_projectile(context, program_state, t, dt);
         this.update_projectiles()
         this.cull_projectiles()
@@ -200,12 +200,16 @@ export class Asteroids_Demo extends Scene {
         this.game_over(context, program_state, t)
 
 
-        // this.displayUI()
+        this.displayUI()
     }
 
     displayUI() {
-        var score = document.getElementById("score")
+
+        let score = document.getElementById("score")
         score.innerHTML = this.score;
+
+        let health = document.getElementById("health")
+        health.innerHTML = "<img src='assets/heart.png' style='width: 50px; height: auto'> </img>".repeat(this.lives)
     }
 
     // draw background
@@ -364,9 +368,8 @@ export class Asteroids_Demo extends Scene {
     spawn_projectile() {
         this.num_projectiles += 1;
         this.projectile_rotation_amount.push(this.spaceshipRotationAmount)
-        this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]]) // TODO: FIX SPACESHIP POS cuz it's wrongk
+        this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
         this.projectile_init_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
-        console.log(this.projectile_pos)
 
     }
 
@@ -407,16 +410,34 @@ export class Asteroids_Demo extends Scene {
         this.projectile_rotation_amount.splice(i, 1);
     }
 
+    asteroid_shot() {
+        this.score += POINTS_PER_ASTEROID_SHOT
+    }
+
     game_over(context, program_state, t) {
         if (this.lives <= 0) {
             this.pause_asteroids = true
 
-            let explosion_scale = 0.5 * Math.sin(t/2)
-            let explosion_transform = Mat4.identity().times(
-                Mat4.translation(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])).times(
+
+
+
+
+            for (let i = 0; i < 10; i++) {
+
+                let explosion_x = this.spaceship_pos[0] + 4 * (Math.random() - 0.5)
+                let explosion_y = this.spaceship_pos[1] + 2 * (Math.random() - 0.5)
+                let explosion_z = this.spaceship_pos[2] + 2 * (Math.random() - 0.5)
+
+                let explosion_scale = Math.sin(t/2)
+                let explosion_transform = Mat4.identity().times(
+                    Mat4.translation(explosion_x, explosion_y, explosion_z)).times(
                     Mat4.scale(explosion_scale, explosion_scale, explosion_scale))
 
-            this.shapes.explosion.draw(context, program_state, explosion_transform, this.materials.explosion)
+
+                this.shapes.explosion.draw(context, program_state, explosion_transform, this.materials.explosion)
+            }
+
+
 
         }
     }
