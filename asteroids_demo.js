@@ -24,6 +24,8 @@ const SPACESHIP_ROTATION_SPEED = 50 // smaller number, higher speed
 const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 
 const POINTS_PER_ASTEROID_SHOT = 10
+
+const NUMBER_OF_LIVES = 10
 // adding new this.asteroid_xxxxxxxx:
 // add variable in constructor
 // assign it value when spawn asteroid in spawn_asteroid
@@ -132,7 +134,7 @@ export class Asteroids_Demo extends Scene {
         this.pause_asteroids = 0;
 
         this.score = 0;
-        this.lives = 3;
+        this.lives = NUMBER_OF_LIVES;
 
 
     }
@@ -185,7 +187,8 @@ export class Asteroids_Demo extends Scene {
         this.update_projectiles()
         this.cull_projectiles()
 
-        this.check_collisions();
+        this.check_asteroid_to_spaceship_collisions();
+        this.check_projectile_to_asteroid_collision();
 
         // this.intersection();
 
@@ -210,6 +213,7 @@ export class Asteroids_Demo extends Scene {
 
         let health = document.getElementById("health")
         health.innerHTML = "<img src='assets/heart.png' style='width: 50px; height: auto'> </img>".repeat(this.lives)
+        health.innerHTML += "<img src='assets/empty_heart.png' style='width: 50px; height: auto'> </img>".repeat(NUMBER_OF_LIVES - this.lives)
     }
 
     // draw background
@@ -335,13 +339,13 @@ export class Asteroids_Demo extends Scene {
 
     // check collisions returns the index of asteroid that collided with spaceship
     // loops through all asteroids and if the difference of position in x y AND z < 2 for any given asteroid, we return that collision happened
-    check_collisions() {
+    check_asteroid_to_spaceship_collisions() {
         for (let i = 0; i < this.num_asteroids; i += 1) {
             // if their z axis value less than 2*radius different then we continue checking
             if (Math.abs(this.asteroid_pos[i][2] - this.spaceship_pos[2]) < 2) {
                 if (Math.abs(this.asteroid_pos[i][1] - this.spaceship_pos[1]) < 2) {
                     if (Math.abs(this.asteroid_pos[i][0] - this.spaceship_pos[0]) < 2) {
-                        console.log("Collision!")
+                        // console.log("Asteroid Spaceship Collision!")
                         // deem the explosion the average of the locations
                         this.explosion(
                             (this.asteroid_pos[i][2] - this.spaceship_pos[2]) / 2.0,
@@ -410,6 +414,35 @@ export class Asteroids_Demo extends Scene {
         this.projectile_rotation_amount.splice(i, 1);
     }
 
+    check_projectile_to_asteroid_collision() {
+        for (let i = 0; i < this.num_asteroids; i += 1) {
+            for (let j = 0; j < this.num_projectiles; j += 1) {
+                // if their z axis value less than 2*radius different then we continue checking
+                if (Math.abs(this.asteroid_pos[i][2] - this.projectile_pos[j][2]) < 2) {
+                    if (Math.abs(this.asteroid_pos[i][1] - this.projectile_pos[j][1]) < 2) {
+                        if (Math.abs(this.asteroid_pos[i][0] - this.projectile_pos[j][0]) < 2) {
+                            console.log("Collision!")
+
+                            // this.explosion(
+                            //     (this.asteroid_pos[i][2] - this.spaceship_pos[2]) / 2.0,
+                            //     (this.asteroid_pos[i][1] - this.spaceship_pos[1]) / 2.0,
+                            //     (this.asteroid_pos[i][0] - this.spaceship_pos[0]) / 2.0,
+                            //     i
+                            // )
+                            this.delete_asteroid(i)
+                            this.delete_projectile(j)
+                            this.score += POINTS_PER_ASTEROID_SHOT
+                            return [i,j]
+                        }
+                    }
+                }
+            }
+        }
+
+        return -1
+    }
+
+
     asteroid_shot() {
         this.score += POINTS_PER_ASTEROID_SHOT
     }
@@ -419,16 +452,13 @@ export class Asteroids_Demo extends Scene {
             this.pause_asteroids = true
 
 
-
-
-
             for (let i = 0; i < 10; i++) {
 
                 let explosion_x = this.spaceship_pos[0] + 4 * (Math.random() - 0.5)
                 let explosion_y = this.spaceship_pos[1] + 2 * (Math.random() - 0.5)
                 let explosion_z = this.spaceship_pos[2] + 2 * (Math.random() - 0.5)
 
-                let explosion_scale = Math.sin(t/2)
+                let explosion_scale = Math.sin(t / 2)
                 let explosion_transform = Mat4.identity().times(
                     Mat4.translation(explosion_x, explosion_y, explosion_z)).times(
                     Mat4.scale(explosion_scale, explosion_scale, explosion_scale))
@@ -436,7 +466,6 @@ export class Asteroids_Demo extends Scene {
 
                 this.shapes.explosion.draw(context, program_state, explosion_transform, this.materials.explosion)
             }
-
 
 
         }
