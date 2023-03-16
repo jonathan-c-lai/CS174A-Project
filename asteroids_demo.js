@@ -357,8 +357,7 @@ export class Asteroids_Demo extends Scene {
             // once explosion past apex, start dimming it
             // note that the apex is when the calculation > pi /2
             if ((this.time_elapsed_explosion / 2) > (Math.PI/2)) {
-                console.log(this.spaceship_explosion_progress)
-                this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship.override(color(0, 0, 0, this.spaceship_explosion_progress/7)));
+                this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship.override(color(0, 0, 0, this.spaceship_explosion_progress/5)));
             } 
             else {
                 // explosion not yet past apex so still draw it normally
