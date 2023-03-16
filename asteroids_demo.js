@@ -138,10 +138,10 @@ export class Asteroids_Demo extends Scene {
 
 
         this.time_shoot_projectile = 0
-        this.time_start_animation = 0;
-
-
-
+        // absolute time that the spaceship explosion starts
+        this.time_start_explosion_animation = 0;
+        // relative time that the spaceship explosion is going through
+        this.time_elapsed_explosion = 0;
     }
 
     make_control_panel() {
@@ -308,14 +308,16 @@ export class Asteroids_Demo extends Scene {
 
     draw_spaceship(context, program_state) {
 
-        // turning left and right
-        if (this.turnLeft) {
-            if (this.spaceshipRotationAmount < MAX_SPACESHIP_ROTATION)
-                this.spaceshipRotationAmount += MAX_SPACESHIP_ROTATION / SPACESHIP_ROTATION_SPEED
-        }
-        if (this.turnRight) {
-            if (this.spaceshipRotationAmount > -1 * MAX_SPACESHIP_ROTATION)
-                this.spaceshipRotationAmount -= MAX_SPACESHIP_ROTATION / SPACESHIP_ROTATION_SPEED
+        // turning left and right if player alive
+        if (this.lives > 0) {
+            if (this.turnLeft) {
+                if (this.spaceshipRotationAmount < MAX_SPACESHIP_ROTATION)
+                    this.spaceshipRotationAmount += MAX_SPACESHIP_ROTATION / SPACESHIP_ROTATION_SPEED
+            }
+            if (this.turnRight) {
+                if (this.spaceshipRotationAmount > -1 * MAX_SPACESHIP_ROTATION)
+                    this.spaceshipRotationAmount -= MAX_SPACESHIP_ROTATION / SPACESHIP_ROTATION_SPEED
+            }
         }
 
         // Just in case I need in future
@@ -453,7 +455,7 @@ export class Asteroids_Demo extends Scene {
         if (this.lives <= 0) {
 
 
-            if (t > this.time_start_animation + 5) {
+            if (t > this.time_start_explosion_animation + 5) {
                 console.log("5 secs")
             }
 
@@ -479,7 +481,7 @@ export class Asteroids_Demo extends Scene {
 
         }
         else {
-            this.time_start_animation = t
+            this.time_start_explosion_animation = t
         }
     }
 
