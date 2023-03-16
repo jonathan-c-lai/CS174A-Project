@@ -25,7 +25,7 @@ const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 
 const POINTS_PER_ASTEROID_SHOT = 10
 
-const NUMBER_OF_LIVES = 10
+const NUMBER_OF_LIVES = 3
 // adding new this.asteroid_xxxxxxxx:
 // add variable in constructor
 // assign it value when spawn asteroid in spawn_asteroid
@@ -137,6 +137,11 @@ export class Asteroids_Demo extends Scene {
         this.lives = NUMBER_OF_LIVES;
 
 
+        this.time_shoot_projectile = 0
+        this.time_start_animation = 0;
+
+
+
     }
 
     make_control_panel() {
@@ -200,7 +205,7 @@ export class Asteroids_Demo extends Scene {
             }
         }
 
-        this.game_over(context, program_state, t)
+        this.game_over(context, program_state, t, dt)
 
 
         this.displayUI()
@@ -370,12 +375,14 @@ export class Asteroids_Demo extends Scene {
     }
 
     spawn_projectile() {
-        this.num_projectiles += 1;
-        this.projectile_rotation_amount.push(this.spaceshipRotationAmount)
-        this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
-        this.projectile_init_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
+        if (this.time_shoot_projectile)
+            this.num_projectiles += 1;
+            this.projectile_rotation_amount.push(this.spaceshipRotationAmount)
+            this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
+            this.projectile_init_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
 
     }
+
 
     update_projectiles() {
         for (let i = 0; i < this.num_projectiles; i += 1) {
@@ -442,13 +449,15 @@ export class Asteroids_Demo extends Scene {
         return -1
     }
 
-
-    asteroid_shot() {
-        this.score += POINTS_PER_ASTEROID_SHOT
-    }
-
-    game_over(context, program_state, t) {
+    game_over(context, program_state, t, dt) {
         if (this.lives <= 0) {
+
+
+            if (t > this.time_start_animation + 5) {
+                console.log("5 secs")
+            }
+
+
             this.pause_asteroids = true
 
 
@@ -468,6 +477,9 @@ export class Asteroids_Demo extends Scene {
             }
 
 
+        }
+        else {
+            this.time_start_animation = t
         }
     }
 
