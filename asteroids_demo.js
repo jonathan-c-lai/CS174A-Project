@@ -10,6 +10,7 @@ const {
 } = defs;
 
 const LIGHT_POSITION = vec4(0, 5, 5, 1);
+const INIT_LIGHT_SIZE = 1000
 
 const NUM_ASTEROID_TYPES = 3
 const ASTEROID_SPAWN_Z_COORD = -70
@@ -30,6 +31,8 @@ const POINTS_PER_ASTEROID_SHOT = 10
 const NUMBER_OF_LIVES = 1
 
 const BUFFER_SECS_BETWEEN_PROJECTILES = 0.75
+
+const NUM_SECS_START_FADE_AFTER_EXPLOSION = Math.PI
 // adding new this.asteroid_xxxxxxxx:
 // add variable in constructor
 // assign it value when spawn asteroid in spawn_asteroid
@@ -157,6 +160,12 @@ export class Asteroids_Demo extends Scene {
 
         this.start_fade = false
         this.background_ambience = 1
+        this.asteroid_ambience = 0.3
+
+        this.light_size = INIT_LIGHT_SIZE
+
+
+        this.time_start_fade = 0
     }
 
     make_control_panel() {
@@ -186,8 +195,18 @@ export class Asteroids_Demo extends Scene {
         // *** Lights: *** Values of vector or point lights.
 
         // TODO: fix the lights and zoom in camera
-        program_state.lights = [new Light(LIGHT_POSITION, color(1, 1, 1, 1), 1000)];
-        // program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
+
+
+        program_state.lights = [new Light(LIGHT_POSITION, color(1, 1, 1, 1), this.light_size)];
+
+        if (this.start_fade) {
+
+            this.draw_background(context, program_state, [true, this.background_ambience]);
+
+        }
+        else {
+            this.draw_background(context, program_state);
+        }
 
         program_state.projection_transform = Mat4.perspective(
             Math.PI / 4, context.width / context.height, 1, 100);
@@ -196,12 +215,6 @@ export class Asteroids_Demo extends Scene {
         this.time_since_last_projectile += 10
 
         // draw background
-        if (this.start_fade) {
-            this.draw_background(context, program_state, [true, this.background_ambience]);
-        }
-        else {
-            this.draw_background(context, program_state);
-        }
 
 
         // update asteroid positions, cull if at origin, draw resulting asteroids
@@ -232,7 +245,6 @@ export class Asteroids_Demo extends Scene {
         this.game_over(context, program_state, t)
         this.displayUI()
 
-        console.log(this.time_since_last_projectile)
 
     }
 
@@ -307,12 +319,23 @@ export class Asteroids_Demo extends Scene {
             // make the transform with some rotation
             let asteroid_transform = (Mat4.identity().times(Mat4.translation(this.asteroid_pos[i][0], this.asteroid_pos[i][1], this.asteroid_pos[i][2]))
                 .times(Mat4.rotation(rotation, this.asteroid_rotation_dir[i][0], this.asteroid_rotation_dir[i][1], this.asteroid_rotation_dir[i][2])));
-            if (this.asteroid_type[i] == 0) {
-                this.shapes.asteroid1.draw(context, program_state, asteroid_transform, this.materials.asteroid1);
-            } else if (this.asteroid_type[i] == 1) {
-                this.shapes.asteroid2.draw(context, program_state, asteroid_transform, this.materials.asteroid2);
-            } else if (this.asteroid_type[i] == 2) {
-                this.shapes.asteroid3.draw(context, program_state, asteroid_transform, this.materials.asteroid3);
+            if (this.start_fade) {
+                if (this.asteroid_type[i] == 0) {
+                    this.shapes.asteroid1.draw(context, program_state, asteroid_transform, this.materials.asteroid1.override({ambient: this.asteroid_ambience}));
+                } else if (this.asteroid_type[i] == 1) {
+                    this.shapes.asteroid2.draw(context, program_state, asteroid_transform, this.materials.asteroid2.override({ambient: this.asteroid_ambience}));
+                } else if (this.asteroid_type[i] == 2) {
+                    this.shapes.asteroid3.draw(context, program_state, asteroid_transform, this.materials.asteroid3.override({ambient: this.asteroid_ambience}));
+                }
+            }
+            else {
+                    if (this.asteroid_type[i] == 0) {
+                        this.shapes.asteroid1.draw(context, program_state, asteroid_transform, this.materials.asteroid1);
+                    } else if (this.asteroid_type[i] == 1) {
+                        this.shapes.asteroid2.draw(context, program_state, asteroid_transform, this.materials.asteroid2);
+                    } else if (this.asteroid_type[i] == 2) {
+                        this.shapes.asteroid3.draw(context, program_state, asteroid_transform, this.materials.asteroid3);
+                    }
             }
         }
     }
@@ -505,6 +528,10 @@ export class Asteroids_Demo extends Scene {
     }
 
     game_over(context, program_state, t) {
+
+        // console.log("explosion: " + this.time_elapsed_explosion)
+        // console.log("fade: " + this.time_start_fade)
+
         if (this.lives <= 0) {
             // time elapsed since beginning explosion
 
@@ -516,16 +543,19 @@ export class Asteroids_Demo extends Scene {
 
             this.time_elapsed_explosion = t - this.time_start_explosion_animation;
 
-            if (this.time_elapsed_explosion > Math.PI) { // should const the time
-                this.time_start_fade = this.time_elapsed_explosion - 1.5 * Math.PI
+            if (this.time_elapsed_explosion > NUM_SECS_START_FADE_AFTER_EXPLOSION) { // should const the time
                 this.start_fade = true
+                this.time_start_fade = this.time_elapsed_explosion - NUM_SECS_START_FADE_AFTER_EXPLOSION
 
-                if (this.time_start_fade < 10) {
-                    this.background_ambience -= 0.0005
 
-                    let size = 1000 - 100 * this.time_start_fade;
-                    // console.log(size)
-                    program_state.lights = [new Light(LIGHT_POSITION, color(1,1,1,1), 1)] // doesn't work
+                if (this.time_start_fade < 5 && this.background_ambience > 0.002 && this.asteroid_ambience > 0.0006 && this.light_size > 2) { // seconds of fade
+                    this.background_ambience -= 0.002 // rate of fade, -0.2 per sec
+                    this.asteroid_ambience -= 0.0006 // -0.06 per sec
+                    this.light_size -= 2
+
+
+                    console.log(this.light_size)
+
                 }
             }
             // if (t > this.time_start_explosion_animation + 5) {
