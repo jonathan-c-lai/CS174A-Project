@@ -146,8 +146,6 @@ export class Asteroids_Demo extends Scene {
         this.lives = NUMBER_OF_LIVES;
 
 
-
-
         this.time_since_last_projectile = BUFFER_SECS_BETWEEN_PROJECTILES * 1000;
         // used for spaceship explosion animation
         // absolute time that the spaceship explosion starts
@@ -195,7 +193,7 @@ export class Asteroids_Demo extends Scene {
             Math.PI / 4, context.width / context.height, 1, 100);
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
-        this.time_since_last_projectile += t
+        this.time_since_last_projectile += 10
 
         // draw background
         if (this.start_fade) {
@@ -234,7 +232,7 @@ export class Asteroids_Demo extends Scene {
         this.game_over(context, program_state, t)
         this.displayUI()
 
-        console.log(program_state.lights[0])
+        console.log(this.time_since_last_projectile)
 
     }
 
@@ -462,6 +460,7 @@ export class Asteroids_Demo extends Scene {
         for (let i = 0; i < this.num_projectiles; i += 1) {
             if (this.projectile_pos[i][2] < ASTEROID_SPAWN_Z_COORD) {
                 this.delete_projectile(i);
+                i--;
 
             }
         }
@@ -492,6 +491,8 @@ export class Asteroids_Demo extends Scene {
                             // )
                             this.delete_asteroid(i)
                             this.delete_projectile(j)
+                            i -= 1;
+                            j -= 1;
                             this.score += POINTS_PER_ASTEROID_SHOT
                             return [i,j]
                         }
