@@ -26,6 +26,8 @@ const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 const POINTS_PER_ASTEROID_SHOT = 10
 
 const NUMBER_OF_LIVES = 3
+
+const BUFFER_SECS_BETWEEN_PROJECTILES = 0.75
 // adding new this.asteroid_xxxxxxxx:
 // add variable in constructor
 // assign it value when spawn asteroid in spawn_asteroid
@@ -137,7 +139,9 @@ export class Asteroids_Demo extends Scene {
         this.lives = NUMBER_OF_LIVES;
 
 
-        this.time_shoot_projectile = 0
+
+
+        this.time_since_last_projectile = BUFFER_SECS_BETWEEN_PROJECTILES * 1000;
         // used for spaceship explosion animation
         // absolute time that the spaceship explosion starts
         this.time_start_explosion_animation = 0;
@@ -154,9 +158,7 @@ export class Asteroids_Demo extends Scene {
         });
         this.key_triggered_button("Rotate Left", ["q"], () => this.turnLeft = true, undefined, () => this.turnLeft = false)
         this.key_triggered_button("Rotate Right", ["e"], () => this.turnRight = true, undefined, () => this.turnRight = false)
-        this.key_triggered_button("Shoot Projectile", ["`"], () => {
-            this.spawn_projectile();
-        })
+        this.key_triggered_button("Shoot Projectile", ["`"], () => this.spawn_projectile())
         this.key_triggered_button("Pause Asteroids", ["p"], () => {
             if (this.lives > 0) {
                 this.pause_asteroids ^= 1;
@@ -180,6 +182,7 @@ export class Asteroids_Demo extends Scene {
             Math.PI / 4, context.width / context.height, 1, 100);
 
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
+        this.time_since_last_projectile += t
 
         // draw background
         this.draw_background(context, program_state);
@@ -200,7 +203,6 @@ export class Asteroids_Demo extends Scene {
         this.check_asteroid_to_spaceship_collisions();
         this.check_projectile_to_asteroid_collision();
 
-        // this.intersection();
 
         // spawn asteroid every so often
         if (!this.pause_asteroids) {
@@ -210,10 +212,12 @@ export class Asteroids_Demo extends Scene {
             }
         }
 
-        this.game_over(context, program_state, t, dt)
+        this.game_over(context, program_state, t)
 
 
         this.displayUI()
+
+        console.log(this.time_since_last_projectile)
     }
 
     displayUI() {
@@ -399,12 +403,13 @@ export class Asteroids_Demo extends Scene {
     }
 
     spawn_projectile() {
-        if (this.time_shoot_projectile)
+        if (this.time_since_last_projectile > BUFFER_SECS_BETWEEN_PROJECTILES * 1000) {
+            this.time_since_last_projectile = 0
             this.num_projectiles += 1;
             this.projectile_rotation_amount.push(this.spaceshipRotationAmount)
             this.projectile_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
             this.projectile_init_pos.push([this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2]])
-
+        }
     }
 
 
@@ -473,7 +478,7 @@ export class Asteroids_Demo extends Scene {
         return -1
     }
 
-    game_over(context, program_state, t, dt) {
+    game_over(context, program_state, t) {
         if (this.lives <= 0) {
             // time elapsed since beginning explosion
             this.time_elapsed_explosion = t - this.time_start_explosion_animation;
