@@ -138,10 +138,13 @@ export class Asteroids_Demo extends Scene {
 
 
         this.time_shoot_projectile = 0
+        // used for spaceship explosion animation
         // absolute time that the spaceship explosion starts
         this.time_start_explosion_animation = 0;
         // relative time that the spaceship explosion is going through
         this.time_elapsed_explosion = 0;
+        // for exploding spaceship, need to dim the spaceship with progress
+        this.spaceship_explosion_progress = 0;
     }
 
     make_control_panel() {
@@ -155,7 +158,9 @@ export class Asteroids_Demo extends Scene {
             this.spawn_projectile();
         })
         this.key_triggered_button("Pause Asteroids", ["p"], () => {
-            this.pause_asteroids ^= 1;
+            if (this.lives > 0) {
+                this.pause_asteroids ^= 1;
+            }
         });
     }
 
@@ -341,7 +346,25 @@ export class Asteroids_Demo extends Scene {
         let spaceship_transform = Mat4.identity().times(Mat4.translation(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1, 0)).times(Mat4.rotation(Math.PI, 0, 1, 0)).times(Mat4.scale(1, 1, 1));
 
         this.spaceship_pos = [10.0 * Math.cos(Math.PI / 2.0 + this.spaceshipRotationAmount), 0, -10.0 * Math.sin(Math.PI / 2.0 + this.spaceshipRotationAmount)]
-        this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship);
+        
+        // if player is alive
+        if (this.lives > 0) {
+            // normal spaceship drawing when spaceship alive
+            this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship);
+        } 
+        // else when dead, normal draw unless explosion past apex, then dim the spaceship with explosion reduction
+        else {
+            // once explosion past apex, start dimming it
+            // note that the apex is when the calculation > pi /2
+            if ((this.time_elapsed_explosion / 2) > (Math.PI/2)) {
+                console.log(this.spaceship_explosion_progress)
+                this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship.override(color(0, 0, 0, this.spaceship_explosion_progress/7)));
+            } 
+            else {
+                // explosion not yet past apex so still draw it normally
+                this.shapes.spaceship.draw(context, program_state, spaceship_transform, this.materials.spaceship);
+            }
+        }
     }
 
     // check collisions returns the index of asteroid that collided with spaceship
@@ -453,32 +476,46 @@ export class Asteroids_Demo extends Scene {
 
     game_over(context, program_state, t, dt) {
         if (this.lives <= 0) {
-
+            // time elapsed since beginning explosion
+            this.time_elapsed_explosion = t - this.time_start_explosion_animation;
 
             if (t > this.time_start_explosion_animation + 5) {
                 console.log("5 secs")
             }
 
-
+            // stop asteroids
             this.pause_asteroids = true
 
+            // stop the explosions once hit the apex 
+                // which is when explosion_scale hits 1
+                // which is when time_elapsed_explosion / 2 == PI
+            if ((this.time_elapsed_explosion / 2) < Math.PI) {
+                // draw explosions
+                for (let i = 0; i < 10; i++) {
 
-            for (let i = 0; i < 10; i++) {
+                    let explosion_x = this.spaceship_pos[0] + 4 * (Math.random() - 0.5)
+                    let explosion_y = this.spaceship_pos[1] + 2 * (Math.random() - 0.5)
+                    let explosion_z = this.spaceship_pos[2] + 2 * (Math.random() - 0.5)
+    
+                    // IF YOU CHANGE THIS CALCULATION, WILL NEED TO UPDATE WHEN THE SPACESHIP DISAPPEARS ALSO
+                    // WILL ALSO NEED TO UPDATE THE IF statement that wraps all of this
+                    let explosion_scale = Math.sin(this.time_elapsed_explosion / 2)
 
-                let explosion_x = this.spaceship_pos[0] + 4 * (Math.random() - 0.5)
-                let explosion_y = this.spaceship_pos[1] + 2 * (Math.random() - 0.5)
-                let explosion_z = this.spaceship_pos[2] + 2 * (Math.random() - 0.5)
-
-                let explosion_scale = Math.sin(t / 2)
-                let explosion_transform = Mat4.identity().times(
-                    Mat4.translation(explosion_x, explosion_y, explosion_z)).times(
-                    Mat4.scale(explosion_scale, explosion_scale, explosion_scale))
-
-
-                this.shapes.explosion.draw(context, program_state, explosion_transform, this.materials.explosion)
+                    // store the explosion scale since this goes from 0 -> 1 -> 0, we can use this
+                    // to draw the spaceship opaqueness and once it hits 1, just disappears
+                    this.spaceship_explosion_progress = explosion_scale
+    
+                    if (explosion_scale == 1) {
+                        this.apex_of_explosion = true;
+                    }
+                    let explosion_transform = Mat4.identity().times(
+                        Mat4.translation(explosion_x, explosion_y, explosion_z)).times(
+                        Mat4.scale(explosion_scale, explosion_scale, explosion_scale))
+    
+    
+                    this.shapes.explosion.draw(context, program_state, explosion_transform, this.materials.explosion)
+                }
             }
-
-
         }
         else {
             this.time_start_explosion_animation = t
