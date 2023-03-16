@@ -531,7 +531,7 @@ export class Asteroids_Demo extends Scene {
         for (let i = 0; i < this.num_projectiles; i += 1) {
             if (this.projectile_pos[i][2] < ASTEROID_SPAWN_Z_COORD) {
                 this.delete_projectile(i);
-
+                i -= 1;
             }
         }
     }
@@ -562,6 +562,8 @@ export class Asteroids_Demo extends Scene {
                             )
                             this.delete_asteroid(i)
                             this.delete_projectile(j)
+                            i -= 1;
+                            j -= 1;
                             this.score += POINTS_PER_ASTEROID_SHOT
                         }
                     }
