@@ -523,7 +523,8 @@ export class Asteroids_Demo extends Scene {
 
 }
 
-// asdf
+// asdf -- messing this up lol
+///
 
 class Texture_Rotate extends Textured_Phong {
     // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
