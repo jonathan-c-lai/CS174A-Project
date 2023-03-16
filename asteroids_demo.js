@@ -485,9 +485,8 @@ export class Asteroids_Demo extends Scene {
             // stop asteroids
             this.pause_asteroids = true
 
-            // stop the explosions once hit the apex 
-                // which is when explosion_scale hits 1
-                // which is when time_elapsed_explosion / 2 == PI
+            // stop the explosions once the explosion_scale goes 0 -> 1 -> 0
+                // which is when (time_elapsed_explosion / 2) == PI
             if ((this.time_elapsed_explosion / 2) < Math.PI) {
                 // draw explosions
                 for (let i = 0; i < 10; i++) {
