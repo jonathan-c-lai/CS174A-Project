@@ -592,9 +592,11 @@ export class Asteroids_Demo extends Scene {
     }
 
     check_projectile_to_asteroid_collision(t) {
+
         for (let i = 0; i < this.num_asteroids; i += 1) {
             for (let j = 0; j < this.num_projectiles; j += 1) {
                 // if their z axis value less than 2*radius different then we continue checking
+
                 if (Math.abs(this.asteroid_pos[i][2] - this.projectile_pos[j][2]) < 2) {
                     if (Math.abs(this.asteroid_pos[i][1] - this.projectile_pos[j][1]) < 2) {
                         if (Math.abs(this.asteroid_pos[i][0] - this.projectile_pos[j][0]) < 2) {
@@ -607,11 +609,14 @@ export class Asteroids_Demo extends Scene {
                                 this.asteroid_pos[i][2],
                                 this.asteroid_type[i]
                             )
+
                             this.delete_asteroid(i)
                             this.delete_projectile(j)
                             i -= 1;
                             j -= 1;
                             this.score += POINTS_PER_ASTEROID_SHOT
+
+                            return
                         }
                     }
                 }
