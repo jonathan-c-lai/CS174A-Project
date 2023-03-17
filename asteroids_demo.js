@@ -9,6 +9,7 @@ const {
     Textured_Phong
 } = defs;
 
+// adjustable parameters for the game
 const LIGHT_POSITION = vec4(0, 5, 5, 1);
 const INIT_LIGHT_SIZE = 1000
 
@@ -36,10 +37,6 @@ const NUMBER_OF_LIVES = 3
 const BUFFER_SECS_BETWEEN_PROJECTILES = 0.75
 
 const NUM_SECS_START_FADE_AFTER_EXPLOSION = Math.PI
-// adding new this.asteroid_xxxxxxxx:
-// add variable in constructor
-// assign it value when spawn asteroid in spawn_asteroid
-// add what happens when asteroid destroyed in cull_asteroids
 
 export class Asteroids_Demo extends Scene {
     constructor() {
@@ -106,7 +103,6 @@ export class Asteroids_Demo extends Scene {
 
         this.initial_camera_location = Mat4.look_at(this.eye_position, this.eye_direction, vec3(0, 1, 0));
 
-
         // need asteroid_type because there was bug that if asteroid removed, the indices would get shifted down
         // so asteroid_type retains the asteroid type of every asteroid
         this.asteroid_type = [];
@@ -133,19 +129,21 @@ export class Asteroids_Demo extends Scene {
         this.turnLeft = false;
         this.turnRight = false;
 
+        // projectile properties
         this.num_projectiles = 0;
-
         this.projectile_init_pos = [];
         this.projectile_pos = [];
         this.projectile_rotation_amount = [];
-
+        this.time_since_last_projectile = BUFFER_SECS_BETWEEN_PROJECTILES * 1000;
 
         // pause animation flag
         this.pause_asteroids = 0;
 
+        // stats
         this.score = 0;
         this.lives = NUMBER_OF_LIVES;
 
+        // screen shake properties
         this.is_screen_shake = false
         this.time_start_screen_shake = 0
         this.time_elapsed_screen_shake = 0
@@ -157,8 +155,7 @@ export class Asteroids_Demo extends Scene {
         this.asteroid_explosion_init_loc = [];
         this.explosion_particle_type = [];
 
-
-        this.time_since_last_projectile = BUFFER_SECS_BETWEEN_PROJECTILES * 1000;
+        // explosion properties
         // used for spaceship explosion animation
         // absolute time that the spaceship explosion starts
         this.time_start_explosion_animation = 0;
@@ -167,17 +164,16 @@ export class Asteroids_Demo extends Scene {
         // for exploding spaceship, need to dim the spaceship with progress
         this.spaceship_explosion_progress = 0;
 
+        // fading light at end
         this.start_fade = false
         this.background_ambience = 1
         this.asteroid_ambience = 0.3
-
         this.light_size = INIT_LIGHT_SIZE
-
         this.time_start_fade = 0
     }
 
     make_control_panel() {
-        // Draw the scene's buttons, setup their actions and keyboard shortcuts, and monitor live measurements.
+        // spawn asteroid, pause, and spaceship movement
         this.key_triggered_button("Spawn Asteroid", ["c"], () => {
             this.spawn_asteroid();
         });
@@ -192,19 +188,11 @@ export class Asteroids_Demo extends Scene {
     }
 
     display(context, program_state) {
-        // display():  Called once per frame of animation.
-        // Setup -- This part sets up the scene's overall camera matrix, projection matrix, and lights:
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
-            // Define the global camera and projection matrices, which are stored in program_state.
-
-
         }
 
-        // *** Lights: *** Values of vector or point lights.
-
-        // TODO: fix the lights and zoom in camera
-
+        // lights and camera setup
         program_state.set_camera(Mat4.look_at(this.eye_position, this.eye_direction, vec3(0, 1, 0)));
         program_state.lights = [new Light(LIGHT_POSITION, color(1, 1, 1, 1), this.light_size)];
 
@@ -223,29 +211,32 @@ export class Asteroids_Demo extends Scene {
         let t = program_state.animation_time / 1000, dt = program_state.animation_delta_time / 1000;
         this.time_since_last_projectile += 10
 
-        // draw background
-
-
-        // update asteroid positions, cull if at origin, draw resulting asteroids
+        // update asteroid positions, cull if far away, draw resulting asteroids
         if (!this.pause_asteroids) {
             this.update_asteroids();
 
         }
         this.cull_asteroids();
         this.draw_asteroids(context, program_state, t);
+
+        // draw spaceship
         this.draw_spaceship(context, program_state);
 
+        // draw update and cull projectiles
         this.draw_projectile(context, program_state, t, dt);
         this.update_projectiles()
         this.cull_projectiles()
 
+        // detect collisions
         this.check_asteroid_to_spaceship_collisions(t);
         this.check_projectile_to_asteroid_collision(t);
 
+        // draw asteroid explosions and update their particles and cull particles that are done
         this.draw_asteroid_explosions(context, program_state);
         this.update_asteroid_explosions();
         this.cull_asteroid_explosions(t)
 
+        // screen shake
         this.check_screen_shake();
 
         // spawn asteroid every so often
@@ -389,24 +380,6 @@ export class Asteroids_Demo extends Scene {
             }
         }
 
-        // Just in case I need in future
-
-        // let model_transform = Mat4.identity()
-        // let translation = Mat4.translation(0,0,-1 * SPACESHIP_DISTANCE_FROM_ORIGIN / 2)
-        // let rotation = Mat4.rotation(Math.PI+this.spaceshipRotationAmount, 0, 1, 0)
-        // let rotationInverse = Mat4.inverse(rotation)
-        // let translationInverse = Mat4.inverse(translation)
-        //
-        // // model_transform = model_transform.times(rotation) // .times(rotation)
-        //
-        //
-        // // model_transform = model_transform.times(rotation)
-        // model_transform = model_transform.times(translation).times(rotation).times(translationInverse)
-        //
-        // // this.shapes.spaceship.draw(context, program_state, model_transform, this.materials.spaceship.override({color: yellow}));
-
-        // console.log("Spaceship pos: " + this.spaceship_pos)
-
         let spaceship_transform = Mat4.identity().times(Mat4.translation(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])).times(Mat4.rotation(this.spaceshipRotationAmount, 0, 1, 0)).times(Mat4.rotation(Math.PI, 0, 1, 0)).times(Mat4.scale(1, 1, 1));
 
         this.spaceship_pos = [10.0 * Math.cos(Math.PI / 2.0 + this.spaceshipRotationAmount), 0, -10.0 * Math.sin(Math.PI / 2.0 + this.spaceshipRotationAmount)]
@@ -448,6 +421,7 @@ export class Asteroids_Demo extends Scene {
                             this.asteroid_type[i]
                         )
                         this.delete_asteroid(i)
+                        i -= 1;
                         this.lives -= 1
 
                         this.is_screen_shake = true
@@ -460,13 +434,8 @@ export class Asteroids_Demo extends Scene {
 
 
     check_screen_shake() {
-        // console.log("asdfasdf")
-        // if (t > this.time_start_explosion_animation + 5) {
-        //     console.log("5 secs")
-        // }
         if (this.is_screen_shake && this.lives > 0) {
 
-            // console.log(this.time_start_screen_shake)
             if (this.time_start_screen_shake < 100) {
                 console.log(this.eye_position[2])
                 this.time_start_screen_shake += 1
@@ -484,8 +453,6 @@ export class Asteroids_Demo extends Scene {
                 this.time_start_screen_shake = 0
                 this.is_screen_shake = false
             }
-            // this.time_start_screen_shake = 0
-            // this.is_screen_shake = false
         }
     }
 
@@ -653,22 +620,9 @@ export class Asteroids_Demo extends Scene {
     }
 
     game_over(context, program_state, t) {
-
-        // console.log("explosion: " + this.time_elapsed_explosion)
-        // console.log("fade: " + this.time_start_fade)
-
         if (this.lives <= 0) {
             // time elapsed since beginning explosion
-
-            // program_state.lights = []
-            //const light_position = vec4(0, 5, 5, 1);
-            //program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1)]
-            // console.log(program_state.lights)
-            //program_state.lights = [new Light(light_position, color(1, 1, 1, 1), 1000)];
-
             this.time_elapsed_explosion = t - this.time_start_explosion_animation;
-
-            // this.eye_position[0] -= 0.02
 
             if (this.time_elapsed_explosion > NUM_SECS_START_FADE_AFTER_EXPLOSION) { // should const the time
                 this.start_fade = true
@@ -682,19 +636,12 @@ export class Asteroids_Demo extends Scene {
                     this.eye_position[1] -= 0.02
                     this.eye_position[2] -= 0.03
 
-                    //console.log(this.eye_direction)
-
                     let temp = this.time_start_fade/3.5
                     let eye_direction_x = INIT_EYE_DIRECTION[0] * (1 - temp) + temp * this.spaceship_pos[0]
                     let eye_direction_y = INIT_EYE_DIRECTION[1] * (1 - temp) + temp * this.spaceship_pos[1]
                     let eye_direction_z = INIT_EYE_DIRECTION[2] * (1 - temp) + temp * this.spaceship_pos[2]
 
-                    //console.log(eye_direction_x, eye_direction_y, eye_direction_z)
-
-
                     this.eye_direction = vec3(eye_direction_x , eye_direction_y, eye_direction_z)
-
-                    // this.eye_direction = vec3(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])
 
                 }
                 else {
@@ -702,14 +649,10 @@ export class Asteroids_Demo extends Scene {
                 }
 
             }
-            // if (t > this.time_start_explosion_animation + 5) {
-            //     console.log("5 secs")
-            // }
 
             // stop asteroids
-
             this.pause_asteroids = true
-
+            
             // stop the explosions once the explosion_scale goes 0 -> 1 -> 0
                 // which is when (time_elapsed_explosion / 2) == PI
             if ((this.time_elapsed_explosion / 2) < Math.PI) {
@@ -748,7 +691,6 @@ export class Asteroids_Demo extends Scene {
 
 
 class Texture_Rotate extends Textured_Phong {
-    // TODO:  Modify the shader below (right now it's just the same fragment shader as Textured_Phong) for requirement #7.
     fragment_glsl_code() {
         return this.shared_glsl_code() + `
             varying vec2 f_tex_coord;
