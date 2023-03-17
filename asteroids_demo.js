@@ -99,6 +99,7 @@ export class Asteroids_Demo extends Scene {
 
         this.initial_camera_location = Mat4.look_at(this.eye_position, this.eye_direction, vec3(0, 1, 0));
 
+
         // need asteroid_type because there was bug that if asteroid removed, the indices would get shifted down
         // so asteroid_type retains the asteroid type of every asteroid
         this.asteroid_type = [];
@@ -163,6 +164,8 @@ export class Asteroids_Demo extends Scene {
         this.asteroid_ambience = 0.3
         this.light_size = INIT_LIGHT_SIZE
         this.time_start_fade = 0
+
+        this.asteroid_spawn_period = ASTEROID_SPAWN_PERIOD
     }
 
     make_control_panel() {
@@ -232,9 +235,14 @@ export class Asteroids_Demo extends Scene {
         // screen shake
         this.check_screen_shake();
 
+        // increase difficulty by updating asteroid_spawn_period to decrease respectively with score
+        if (this.asteroid_spawn_period > 0.1) {
+            this.asteroid_spawn_period = ASTEROID_SPAWN_PERIOD - 0.05 * (Math.floor(this.score / (5 * POINTS_PER_ASTEROID_SHOT)))
+        }
+
         // spawn asteroid every so often
         if (!this.pause_asteroids) {
-            if (t - this.last_asteroid_spawned_t > ASTEROID_SPAWN_PERIOD) {
+            if (t - this.last_asteroid_spawned_t > this.asteroid_spawn_period) {
                 this.spawn_asteroid();
                 this.last_asteroid_spawned_t = t;
             }
@@ -673,7 +681,6 @@ export class Asteroids_Demo extends Scene {
         }
     }
 }
-
 
 
 class Texture_Rotate extends Textured_Phong {
