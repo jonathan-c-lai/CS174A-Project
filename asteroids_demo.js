@@ -53,7 +53,6 @@ export class Asteroids_Demo extends Scene {
 
             spaceship: new Shape_From_File("assets/Fighter_01.obj"),
 
-            asteroid_test: new Shape_From_File("assets/Asteroid.obj"),
             explosion: new defs.Subdivision_Sphere(5),
         };
 
