@@ -593,26 +593,40 @@ export class Asteroids_Demo extends Scene {
                 this.start_fade = true
                 this.time_start_fade = this.time_elapsed_explosion - NUM_SECS_START_FADE_AFTER_EXPLOSION
 
-                if (this.time_start_fade < 5 && this.background_ambience > 0.002 && this.asteroid_ambience > 0.0006 && this.light_size > 2) { // seconds of fade
+                if (this.time_start_fade < 5 && this.background_ambience > 0.002 && this.asteroid_ambience > 0.0006 && this.light_size > 1.95) { // seconds of fade
                     this.background_ambience -= 0.002 // rate of fade, -0.2 per sec
                     this.asteroid_ambience -= 0.0006 // -0.06 per sec
-                    this.light_size -= 2
-                    this.eye_position[1] -= 0.02
-                    this.eye_position[2] -= 0.04
+                    this.light_size -= 1.95
 
-                    this.eye_direction = vec3(this.eye_direction[0], this.eye_direction[1], this.eye_direction[2])
+                    this.eye_position[1] -= 0.02
+                    this.eye_position[2] -= 0.03
+
+                    console.log(this.eye_direction)
+
+                    let temp = this.time_start_fade/3.5
+                    let eye_direction_x = INIT_EYE_DIRECTION[0] * (1 - temp) + temp * this.spaceship_pos[0]
+                    let eye_direction_y = INIT_EYE_DIRECTION[1] * (1 - temp) + temp * this.spaceship_pos[1]
+                    let eye_direction_z = INIT_EYE_DIRECTION[2] * (1 - temp) + temp * this.spaceship_pos[2]
+
+                    console.log(eye_direction_x, eye_direction_y, eye_direction_z)
+
+
+                    this.eye_direction = vec3(eye_direction_x , eye_direction_y, eye_direction_z)
 
                     // this.eye_direction = vec3(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])
 
-
-
                 }
+                else {
+                    this.light_size = 0
+                }
+
             }
             // if (t > this.time_start_explosion_animation + 5) {
             //     console.log("5 secs")
             // }
 
             // stop asteroids
+
             this.pause_asteroids = true
 
             // stop the explosions once the explosion_scale goes 0 -> 1 -> 0
