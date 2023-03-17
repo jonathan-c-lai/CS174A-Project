@@ -40,10 +40,8 @@ const NUM_SECS_START_FADE_AFTER_EXPLOSION = Math.PI
 
 export class Asteroids_Demo extends Scene {
     constructor() {
-        // constructor(): Scenes begin by populating initial values like the Shapes and Materials they'll need.
         super();
-
-        // At the beginning of our program, load one of each of these shape definitions onto the GPU.
+        // *** Shapes
         this.shapes = {
             asteroid1: new Shape_From_File("assets/Asteroid1.obj"),
             asteroid2: new Shape_From_File("assets/Asteroid2.obj"),
@@ -57,8 +55,6 @@ export class Asteroids_Demo extends Scene {
 
             asteroid_test: new Shape_From_File("assets/Asteroid.obj"),
             explosion: new defs.Subdivision_Sphere(5),
-
-
         };
 
         // *** Materials
@@ -156,13 +152,10 @@ export class Asteroids_Demo extends Scene {
         this.explosion_particle_type = [];
 
         // explosion properties
-        // used for spaceship explosion animation
-        // absolute time that the spaceship explosion starts
-        this.time_start_explosion_animation = 0;
-        // relative time that the spaceship explosion is going through
-        this.time_elapsed_explosion = 0;
-        // for exploding spaceship, need to dim the spaceship with progress
-        this.spaceship_explosion_progress = 0;
+            // used for spaceship explosion animation
+        this.time_start_explosion_animation = 0; // absolute time that the spaceship explosion starts
+        this.time_elapsed_explosion = 0; // relative time that the spaceship explosion is going through
+        this.spaceship_explosion_progress = 0; // for exploding spaceship, need to dim the spaceship with progress
 
         // fading light at end
         this.start_fade = false
@@ -299,8 +292,6 @@ export class Asteroids_Demo extends Scene {
         this.asteroid_type.push((this.num_asteroids - 1) % NUM_ASTEROID_TYPES);
         this.asteroid_frames_till_origin.push(frames_until_asteroid_to_origin);
         this.asteroid_rotation_dir.push([Math.random(), Math.random(), Math.random()])
-
-        //console.log("new asteroid spawned w/ pos: ", x,y,z);
     }
 
     // update position of asteroids
@@ -357,7 +348,6 @@ export class Asteroids_Demo extends Scene {
 
     // delete asteroid given index
     delete_asteroid(i) {
-        // console.log("asteroid removed");
         this.num_asteroids -= 1;
         this.asteroid_type.splice(i, 1);
         this.asteroid_init_pos.splice(i, 1);
@@ -411,7 +401,6 @@ export class Asteroids_Demo extends Scene {
             if (Math.abs(this.asteroid_pos[i][2] - this.spaceship_pos[2]) < 2) {
                 if (Math.abs(this.asteroid_pos[i][1] - this.spaceship_pos[1]) < 2) {
                     if (Math.abs(this.asteroid_pos[i][0] - this.spaceship_pos[0]) < 2) {
-                        // console.log("Asteroid Spaceship Collision!")
                         // deem the explosion the average of the locations
                         this.initialize_asteroid_explosion(
                             t,
@@ -423,7 +412,6 @@ export class Asteroids_Demo extends Scene {
                         this.delete_asteroid(i)
                         i -= 1;
                         this.lives -= 1
-
                         this.is_screen_shake = true
                     }
                 }
@@ -437,7 +425,6 @@ export class Asteroids_Demo extends Scene {
         if (this.is_screen_shake && this.lives > 0) {
 
             if (this.time_start_screen_shake < 100) {
-                console.log(this.eye_position[2])
                 this.time_start_screen_shake += 1
                 if ((this.time_start_screen_shake * 9) % 2) {
                     this.eye_position[0] += 1
@@ -449,7 +436,6 @@ export class Asteroids_Demo extends Scene {
                 }
             }
             else {
-                console.log("stop")
                 this.time_start_screen_shake = 0
                 this.is_screen_shake = false
             }
@@ -584,7 +570,6 @@ export class Asteroids_Demo extends Scene {
     }
 
     delete_projectile(i) {
-        console.log("projectile removed");
         this.num_projectiles -= 1;
         this.projectile_init_pos.splice(i, 1);
         this.projectile_pos.splice(i, 1);
@@ -600,8 +585,6 @@ export class Asteroids_Demo extends Scene {
                 if (Math.abs(this.asteroid_pos[i][2] - this.projectile_pos[j][2]) < 2) {
                     if (Math.abs(this.asteroid_pos[i][1] - this.projectile_pos[j][1]) < 2) {
                         if (Math.abs(this.asteroid_pos[i][0] - this.projectile_pos[j][0]) < 2) {
-                            console.log("Collision!")
-
                             this.initialize_asteroid_explosion(
                                 t,
                                 this.asteroid_pos[i][0],
@@ -689,8 +672,6 @@ export class Asteroids_Demo extends Scene {
             this.time_start_explosion_animation = t
         }
     }
-
-
 }
 
 
