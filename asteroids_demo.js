@@ -12,6 +12,9 @@ const {
 const LIGHT_POSITION = vec4(0, 5, 5, 1);
 const INIT_LIGHT_SIZE = 1000
 
+const INIT_EYE_POSITION = vec3(0, 15, 15)
+const INIT_EYE_DIRECTION = vec3(0, 0, -20)
+
 const NUM_ASTEROID_TYPES = 3
 const ASTEROID_SPAWN_Z_COORD = -70
 const ASTEROID_SPAWN_X_COORD_MAX = 70
@@ -28,7 +31,7 @@ const SPACESHIP_DISTANCE_FROM_ORIGIN = 3.0
 
 const POINTS_PER_ASTEROID_SHOT = 10
 
-const NUMBER_OF_LIVES = 1
+const NUMBER_OF_LIVES = 3
 
 const BUFFER_SECS_BETWEEN_PROJECTILES = 0.75
 
@@ -105,8 +108,10 @@ export class Asteroids_Demo extends Scene {
                 }
             )
         }
+        this.eye_position = INIT_EYE_POSITION
+        this.eye_direction = INIT_EYE_DIRECTION
 
-        this.initial_camera_location = Mat4.look_at(vec3(0, 15, 15), vec3(0, 0, -20), vec3(0, 1, 0));
+        this.initial_camera_location = Mat4.look_at(this.eye_position, this.eye_direction, vec3(0, 1, 0));
 
 
         // need asteroid_type because there was bug that if asteroid removed, the indices would get shifted down
@@ -148,6 +153,9 @@ export class Asteroids_Demo extends Scene {
         this.score = 0;
         this.lives = NUMBER_OF_LIVES;
 
+        this.is_screen_shake = false
+        this.time_start_screen_shake = 0
+        this.time_elapsed_screen_shake = 0
 
         this.time_since_last_projectile = BUFFER_SECS_BETWEEN_PROJECTILES * 1000;
         // used for spaceship explosion animation
@@ -163,7 +171,6 @@ export class Asteroids_Demo extends Scene {
         this.asteroid_ambience = 0.3
 
         this.light_size = INIT_LIGHT_SIZE
-
 
         this.time_start_fade = 0
     }
@@ -189,14 +196,15 @@ export class Asteroids_Demo extends Scene {
         if (!context.scratchpad.controls) {
             this.children.push(context.scratchpad.controls = new defs.Movement_Controls());
             // Define the global camera and projection matrices, which are stored in program_state.
-            program_state.set_camera(this.initial_camera_location);
+
+
         }
 
         // *** Lights: *** Values of vector or point lights.
 
         // TODO: fix the lights and zoom in camera
 
-
+        program_state.set_camera(Mat4.look_at(this.eye_position, this.eye_direction, vec3(0, 1, 0)));
         program_state.lights = [new Light(LIGHT_POSITION, color(1, 1, 1, 1), this.light_size)];
 
         if (this.start_fade) {
@@ -233,6 +241,7 @@ export class Asteroids_Demo extends Scene {
         this.check_asteroid_to_spaceship_collisions();
         this.check_projectile_to_asteroid_collision();
 
+        this.check_screen_shake();
 
         // spawn asteroid every so often
         if (!this.pause_asteroids) {
@@ -434,12 +443,47 @@ export class Asteroids_Demo extends Scene {
                         )
                         this.delete_asteroid(i)
                         this.lives -= 1
+
+                        this.is_screen_shake = true
+
                         return i
                     }
                 }
             }
         }
         return -1
+    }
+
+
+
+    check_screen_shake() {
+        // console.log("asdfasdf")
+        // if (t > this.time_start_explosion_animation + 5) {
+        //     console.log("5 secs")
+        // }
+        if (this.is_screen_shake && this.lives > 0) {
+
+            // console.log(this.time_start_screen_shake)
+            if (this.time_start_screen_shake < 100) {
+                console.log(this.eye_position[2])
+                this.time_start_screen_shake += 1
+                if ((this.time_start_screen_shake * 9) % 2) {
+                    this.eye_position[0] += 1
+                    this.eye_position[1] += 1
+                }
+                else {
+                    this.eye_position[0] -= 1
+                    this.eye_position[1] -= 1
+                }
+            }
+            else {
+                console.log("stop")
+                this.time_start_screen_shake = 0
+                this.is_screen_shake = false
+            }
+            // this.time_start_screen_shake = 0
+            // this.is_screen_shake = false
+        }
     }
 
     // animates an explosion at the coordinates x, y, z
@@ -543,18 +587,24 @@ export class Asteroids_Demo extends Scene {
 
             this.time_elapsed_explosion = t - this.time_start_explosion_animation;
 
+            // this.eye_position[0] -= 0.02
+
             if (this.time_elapsed_explosion > NUM_SECS_START_FADE_AFTER_EXPLOSION) { // should const the time
                 this.start_fade = true
                 this.time_start_fade = this.time_elapsed_explosion - NUM_SECS_START_FADE_AFTER_EXPLOSION
-
 
                 if (this.time_start_fade < 5 && this.background_ambience > 0.002 && this.asteroid_ambience > 0.0006 && this.light_size > 2) { // seconds of fade
                     this.background_ambience -= 0.002 // rate of fade, -0.2 per sec
                     this.asteroid_ambience -= 0.0006 // -0.06 per sec
                     this.light_size -= 2
+                    this.eye_position[1] -= 0.02
+                    this.eye_position[2] -= 0.04
+
+                    this.eye_direction = vec3(this.eye_direction[0], this.eye_direction[1], this.eye_direction[2])
+
+                    // this.eye_direction = vec3(this.spaceship_pos[0], this.spaceship_pos[1], this.spaceship_pos[2])
 
 
-                    console.log(this.light_size)
 
                 }
             }
