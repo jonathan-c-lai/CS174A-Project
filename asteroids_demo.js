@@ -66,7 +66,7 @@ export class Asteroids_Demo extends Scene {
             asteroid3: new Material(new defs.Phong_Shader(),
                 {ambient: 0.3, diffusivity: 1, specular: 0.2, color: hex_color("#afafaf")}),
 
-            background: new Material(new Texture_Rotate(), {
+            background: new Material(new Apply_Texture(), {
                 color: hex_color("#000000"),
                 ambient: 1,
                 specular: 0,
@@ -75,7 +75,7 @@ export class Asteroids_Demo extends Scene {
                 texture: new Texture("assets/galaxy_2048.jpg", "LINEAR_MIPMAP_LINEAR")
             }),
 
-            spaceship: new Material(new Texture_Rotate(), {
+            spaceship: new Material(new Apply_Texture(), {
                 color: hex_color("#000000"),
                 ambient: 1,
                 specular: 0,
@@ -85,7 +85,7 @@ export class Asteroids_Demo extends Scene {
             projectile: new Material(new defs.Phong_Shader(),
                 {ambient: .4, diffusivity: .6, color: hex_color("#ffffff")}),
 
-            explosion: new Material(new Texture_Rotate(), {
+            explosion: new Material(new Apply_Texture(), {
                     color: hex_color("#000000"),
                     ambient: 1,
                     specular: 0,
@@ -683,16 +683,14 @@ export class Asteroids_Demo extends Scene {
 }
 
 
-class Texture_Rotate extends Textured_Phong {
+class Apply_Texture extends Textured_Phong {
     fragment_glsl_code() {
         return this.shared_glsl_code() + `
             varying vec2 f_tex_coord;
             uniform sampler2D texture;
             uniform float animation_time;
             void main(){
-                float slide_amnt = mod(2.0*animation_time, 4.0);
-                vec2 scroll_tex_coord = vec2(f_tex_coord.x - slide_amnt, f_tex_coord.y);
-                vec4 tex_color = texture2D( texture, scroll_tex_coord);
+                vec4 tex_color = texture2D( texture, f_tex_coord);
                 
                 if( tex_color.w < .01 ) discard;
                                                                          // Compute an initial (ambient) color:
